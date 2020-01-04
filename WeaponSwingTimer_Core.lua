@@ -543,6 +543,7 @@ local function InitializeAllVisuals()
     addon_data.target.InitializeVisuals()
     addon_data.hunter.InitializeVisuals()
     addon_data.config.InitializeVisuals()
+	addon_data.warrior.InitializeVisuals()
 end
 
 
