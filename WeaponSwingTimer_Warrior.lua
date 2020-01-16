@@ -14,10 +14,15 @@ local function SetTick()
 	local barwidth_s = addon_data.player.main_weapon_speed
 	local px_per_second = barwidth_px / barwidth_s
 	local tickwidth = max(2, latency_s * px_per_second)
-	local timeleft = addon_data.player.off_swing_timer
+	local mh_remaining = addon_data.player.main_swing_timer
+	local oh_remaining = addon_data.player.off_swing_timer
 	tickMark:ClearAllPoints()
 	tickMark:SetSize(tickwidth, bar:GetHeight())
-	tickMark:SetPoint("RIGHT", bar, "RIGHT", timeleft * px_per_second, 0)
+	if oh_remaining <= mh_remaining then
+		tickMark:SetPoint("RIGHT", bar, "RIGHT", oh_remaining * px_per_second, 0)
+	else
+		tickMark:SetPoint("LEFT", bar, "LEFT", (oh_remaining - mh_remaining) * px_per_second - tickwidth, 0)
+	end
 end
 
 local function GetActionbarState()
