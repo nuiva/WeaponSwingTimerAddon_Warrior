@@ -629,6 +629,7 @@ addon_data.core.SpellHandler = function(unit, spell_id)
             for spell_index, curr_spell_id in ipairs(spell_table) do
                 if spell_id == curr_spell_id then
                     if unit == "player" then
+						addon_data.player.UpdateWeaponSpeed()
                         addon_data.player.ResetMainSwingTimer()
                     elseif unit == "target" then
                         addon_data.target.ResetMainSwingTimer()
