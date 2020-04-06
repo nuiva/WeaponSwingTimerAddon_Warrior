@@ -261,22 +261,12 @@ addon_data.hunter.UpdateCastTimer = function(elapsed)
     end
 end
 
+addon_data.hunter.UpdateWeaponSpeedUntilChanged = false
 addon_data.hunter.OnUpdate = function(elapsed)
     if character_hunter_settings.enabled then
-        -- Update the ranged attack speed
-        new_range_speed, _, _, _, _, _ = UnitRangedDamage("player")
-        -- FIXME: Temp fix until I can nail down the divide by zero error
-        if addon_data.hunter.range_speed == 0 then
-            addon_data.hunter.range_speed = 3
-        end
-        -- Handling for getting haste buffs in combat
-        if new_range_speed ~= addon_data.hunter.range_speed then
-            if not addon_data.hunter.auto_shot_ready then
-                addon_data.hunter.shot_timer = addon_data.hunter.shot_timer * 
-                                               (new_range_speed / addon_data.hunter.range_speed)
-            end
-            addon_data.hunter.range_speed = new_range_speed
-        end
+		if addon_data.hunter.UpdateWeaponSpeedUntilChanged then
+			addon_data.hunter.UpdateWeaponSpeed()
+		end
         -- Check to see if we have moved
         addon_data.hunter.has_moved = (GetUnitSpeed("player") > 0)
         -- Update the Auto Shot timer based on the updated settings
@@ -288,6 +278,25 @@ addon_data.hunter.OnUpdate = function(elapsed)
         -- Update the visuals
         addon_data.hunter.UpdateVisualsOnUpdate()
     end
+end
+
+addon_data.hunter.UpdateWeaponSpeed = function()
+	-- Update the ranged attack speed
+	new_range_speed, _, _, _, _, _ = UnitRangedDamage("player")
+	--[[ FIXME: Temp fix until I can nail down the divide by zero error
+	-- Editing author: Never seen this error.
+	if addon_data.hunter.range_speed == 0 then
+		addon_data.hunter.range_speed = 3
+	end]]
+	-- Handling for getting haste buffs in combat
+	if new_range_speed ~= addon_data.hunter.range_speed then
+		addon_data.hunter.UpdateWeaponSpeedUntilChanged = false
+		if not addon_data.hunter.auto_shot_ready then
+			addon_data.hunter.shot_timer = addon_data.hunter.shot_timer * 
+										   (new_range_speed / addon_data.hunter.range_speed)
+		end
+		addon_data.hunter.range_speed = new_range_speed
+	end
 end
 
 addon_data.hunter.OnStartAutorepeatSpell = function()
@@ -338,6 +347,7 @@ addon_data.hunter.OnUnitSpellCastSucceeded = function(unit, spell_id)
         if addon_data.hunter.shot_spell_ids[spell_id] then
             spell_name = addon_data.hunter.shot_spell_ids[spell_id].spell_name
             if addon_data.hunter.is_spell_auto_shot(spell_id) or addon_data.hunter.is_spell_shoot(spell_id) then
+				addon_data.hunter.UpdateWeaponSpeed()
                 hunter_bw_shot_timer = GetTime()
                 addon_data.hunter.last_shot_time = GetTime()
                 addon_data.hunter.ResetShotTimer()
