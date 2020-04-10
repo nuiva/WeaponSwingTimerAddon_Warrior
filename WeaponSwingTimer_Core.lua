@@ -696,6 +696,7 @@ local function CoreFrame_OnEvent(self, event, ...)
     elseif event == "UNIT_SPELLCAST_STOP" then
         addon_data.hunter.OnUnitSpellCastStop(args[1], args[3])
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+		addon_data.core.SpellHandler("player", args[3])
         addon_data.hunter.OnUnitSpellCastSucceeded(args[1], args[3])
     elseif event == "UNIT_SPELLCAST_DELAYED" then
         addon_data.hunter.OnUnitSpellCastDelayed(args[1], args[3])

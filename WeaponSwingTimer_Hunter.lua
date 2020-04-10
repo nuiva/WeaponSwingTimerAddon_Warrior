@@ -341,29 +341,32 @@ addon_data.hunter.OnUnitSpellCastStart = function(unit, spell_id)
 end
 
 addon_data.hunter.OnUnitSpellCastSucceeded = function(unit, spell_id)
-    if unit == 'player' then
-        addon_data.hunter.casting = false
-        -- If the spell is Auto Shot then reset the shot timer
-        if addon_data.hunter.shot_spell_ids[spell_id] then
-            spell_name = addon_data.hunter.shot_spell_ids[spell_id].spell_name
-            if addon_data.hunter.is_spell_auto_shot(spell_id) or addon_data.hunter.is_spell_shoot(spell_id) then
-				addon_data.hunter.UpdateWeaponSpeed()
-                hunter_bw_shot_timer = GetTime()
-                addon_data.hunter.last_shot_time = GetTime()
-                addon_data.hunter.ResetShotTimer()
-            end
-        end
-        -- Otherwise, set the cast bar to green
-        if addon_data.hunter.shot_spell_ids[spell_id] then
-            spell_name = addon_data.hunter.shot_spell_ids[spell_id].spell_name
-            if not addon_data.hunter.is_spell_auto_shot(spell_id) and not addon_data.hunter.is_spell_shoot(spell_id) then
-                addon_data.hunter.casting_shot = false
-                addon_data.hunter.frame.spell_bar:SetVertexColor(0, 0.5, 0, 1)
-                addon_data.hunter.frame.spell_bar:SetWidth(character_hunter_settings.width)
-                addon_data.hunter.frame.spell_bar_text:SetText("0.0")
-            end
-        end
-    end
+	if unit ~= "player" then return end
+	addon_data.hunter.casting = false
+	-- If the spell is Auto Shot then reset the shot timer
+	if addon_data.hunter.shot_spell_ids[spell_id] then
+		spell_name = addon_data.hunter.shot_spell_ids[spell_id].spell_name
+		if addon_data.hunter.is_spell_auto_shot(spell_id) or addon_data.hunter.is_spell_shoot(spell_id) then
+			addon_data.hunter.UpdateWeaponSpeed()
+			addon_data.hunter.last_shot_time = GetTime()
+			addon_data.hunter.ResetShotTimer()
+		end
+	end
+	if spell_id == 5384 then
+			addon_data.hunter.UpdateWeaponSpeed()
+			addon_data.hunter.last_shot_time = GetTime()
+		addon_data.hunter.ResetShotTimer()
+	end
+	-- Otherwise, set the cast bar to green
+	if addon_data.hunter.shot_spell_ids[spell_id] then
+		spell_name = addon_data.hunter.shot_spell_ids[spell_id].spell_name
+		if not addon_data.hunter.is_spell_auto_shot(spell_id) and not addon_data.hunter.is_spell_shoot(spell_id) then
+			addon_data.hunter.casting_shot = false
+			addon_data.hunter.frame.spell_bar:SetVertexColor(0, 0.5, 0, 1)
+			addon_data.hunter.frame.spell_bar:SetWidth(character_hunter_settings.width)
+			addon_data.hunter.frame.spell_bar_text:SetText("0.0")
+		end
+	end
 end
 
 addon_data.hunter.OnUnitSpellCastDelayed = function(unit, spell_id)
