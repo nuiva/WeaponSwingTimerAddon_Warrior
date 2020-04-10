@@ -2,8 +2,7 @@ local addon_name, addon_data = ...
 
 addon_data.warrior = {}
 local frame = CreateFrame("FRAME")
-local slotList = nil
-local state = false
+local slotLists = {}
 local bar = nil
 local tickMark = nil
 
@@ -26,34 +25,40 @@ local function SetTick()
 end
 
 local function GetActionbarState()
-	local spellid = select(7, GetSpellInfo("Heroic Strike"))
-	if spellid then
-		slotList = C_ActionBar.FindSpellActionButtons(spellid)
+	local spellidHS = select(7, GetSpellInfo("Heroic Strike"))
+	local spellidCleave = select(7, GetSpellInfo("Cleave"))
+	slotLists[1] = spellidHS and C_ActionBar.FindSpellActionButtons(spellidHS) or {}
+	slotLists[2] = spellidCleave and C_ActionBar.FindSpellActionButtons(spellidCleave) or {}
+end
+
+local function GetQueuedAction()
+	for _,v in pairs(slotLists[1]) do
+		if IsCurrentAction(v) then
+			return 2
+		end
 	end
+	for _,v in pairs(slotLists[2]) do
+		if IsCurrentAction(v) then
+			return 3
+		end
+	end
+	return 1
 end
 
-local function HeroicStrikeActive()
-	if state then return end
-	state = true
-	addon_data.player.frame.main_bar:SetVertexColor(.5,.5,0);
-end
-
-local function HeroicStrikeInactive()
-	if not state then return end
-	state = false
+local function SetBarColor(queuedAction)
 	local s = character_player_settings
-	addon_data.player.frame.main_bar:SetVertexColor(s.main_r, s.main_g, s.main_b)
+	local barColors = {
+		[1] = {s.main_r, s.main_g, s.main_b},
+		[2] = {.5, .5, 0},
+		[3] = {0, .5, 0}
+	}
+	addon_data.player.frame.main_bar:SetVertexColor(unpack(barColors[queuedAction]))
 end
 
 local function OnEvent(self,e)
 	if e == "ACTIONBAR_UPDATE_STATE" then
-		if slotList and IsCurrentAction(slotList[1]) then
-			HeroicStrikeActive()
-		else
-			HeroicStrikeInactive()
-		end
-	elseif e == "ADDON_LOADED" then
-		
+		local queuedAction = GetQueuedAction()
+		SetBarColor(queuedAction)
 	else
 		GetActionbarState()
 	end
@@ -70,7 +75,7 @@ end
 frame:RegisterEvent("ACTIONBAR_UPDATE_STATE")
 frame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 frame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
-frame:RegisterEvent("ADDON_LOADED")
+--frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", OnEvent)
 frame:SetScript("OnUpdate", SetTick)
 
