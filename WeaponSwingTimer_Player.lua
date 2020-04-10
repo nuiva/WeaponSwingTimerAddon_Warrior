@@ -76,7 +76,7 @@ do
 	local autoAttackEnabled = false
 	addon_data.player.UpdateAutoAttack = function()
 		local a = IsCurrentAction(1)
-		if a and not autoAttackEnabled then
+		if addon_data.player.has_offhand and a and not autoAttackEnabled then
 			addon_data.player.off_swing_timer = max(addon_data.player.off_swing_timer, .5 * addon_data.player.off_weapon_speed)
 		end
 		autoAttackEnabled = a
