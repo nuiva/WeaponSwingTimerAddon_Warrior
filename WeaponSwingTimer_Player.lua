@@ -115,17 +115,13 @@ end
 addon_data.player.OnInventoryChange = function()
     local new_main_guid = GetInventoryItemID("player", 16)
     local new_off_guid = GetInventoryItemID("player", 17)
-    -- Check for a main hand weapon change
-    if addon_data.player.main_weapon_id ~= new_main_guid then
+    if addon_data.player.main_weapon_id ~= new_main_guid or addon_data.player.off_weapon_id ~= new_off_guid then
         addon_data.player.UpdateMainWeaponSpeed()
         addon_data.player.ResetMainSwingTimer()
-    end
-    addon_data.player.main_weapon_id = new_main_guid
-    -- Check for an off hand weapon change
-    if addon_data.player.off_weapon_id ~= new_off_guid then
         addon_data.player.UpdateOffWeaponSpeed()
         addon_data.player.ResetOffSwingTimer()
     end
+    addon_data.player.main_weapon_id = new_main_guid
     addon_data.player.off_weapon_id = new_off_guid
 end
 
