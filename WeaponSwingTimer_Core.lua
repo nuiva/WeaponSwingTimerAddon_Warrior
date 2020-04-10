@@ -622,20 +622,32 @@ addon_data.core.MissHandler = function(unit, miss_type, is_offhand)
     end
 end
 
+local function ResetUnitSwingTimer(unit)
+	local t = addon_data[unit]
+	if t == nil then
+		addon_data.utils.PrintMsg("ResetUnitSwingTimer: No data table for unit " .. unit)
+	end
+	t.UpdateWeaponSpeed()
+	t.ResetMainSwingTimer()
+	t.ResetOffSwingTimer()
+end
+
 addon_data.core.SpellHandler = function(unit, spell_id)
+	if unit == nil or spell_id == nil then
+		--addon_data.utils.PrintMsg("SpellHandler: invalid arguments " .. tostring(unit) .. ", " .. tostring(spell_id))
+		return
+	end
+	local castTime = select(4, GetSpellInfo(spell_id))
+	if castTime > 0 then
+		ResetUnitSwingTimer(unit)
+		return
+	end
     local _, player_class, _ = UnitClass(unit)
 	local spell_table = swing_reset_spells[player_class]
 	if spell_table == nil then return end
 	for spell_index, curr_spell_id in ipairs(spell_table) do
 		if spell_id == curr_spell_id then
-			if unit == "player" then
-				addon_data.player.UpdateWeaponSpeed()
-				addon_data.player.ResetMainSwingTimer()
-			elseif unit == "target" then
-				addon_data.target.ResetMainSwingTimer()
-			else
-				addon_data.utils.PrintMsg("Unexpected Unit Type in SpellHandler().")
-			end
+			ResetUnitSwingTimer(unit)
 		end
 	end
 end
