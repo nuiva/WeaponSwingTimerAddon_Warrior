@@ -144,16 +144,15 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
 			addon_data.player.UpdateWeaponSpeed()
             local miss_type, is_offhand = select(12, unpack(combat_info))
             addon_data.core.MissHandler("player", miss_type, is_offhand)
-        elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
+        --[[elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
             local _, _, _, _, _, _, spell_id = GetSpellInfo(spell_name)
-            addon_data.core.SpellHandler("player", spell_id)
+            addon_data.core.SpellHandler("player", spell_id)]]
 		elseif (event == "SPELL_AURA_APPLIED") or (event == "SPELL_AURA_REMOVED") then
-			if combat_info[13] == "Flurry" then
+			if combat_info[13] == "Flurry" or combat_info[13] == "Chilled" then
 				addon_data.player.UpdateWeaponSpeedUntilChanged = true -- Weapon speed hasn't updated when CLEU fires
 			end
         end
     end
-    
 end
 
 addon_data.player.ResetMainSwingTimer = function()
