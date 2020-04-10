@@ -117,9 +117,13 @@ addon_data.player.OnInventoryChange = function()
     local new_off_guid = GetInventoryItemID("player", 17)
     if addon_data.player.main_weapon_id ~= new_main_guid or addon_data.player.off_weapon_id ~= new_off_guid then
         addon_data.player.UpdateMainWeaponSpeed()
-        addon_data.player.ResetMainSwingTimer()
         addon_data.player.UpdateOffWeaponSpeed()
-        addon_data.player.ResetOffSwingTimer()
+		-- It seems that swing timer is reset one spell batch (400ms) before the equipment changes
+		-- Adding 200ms to swing timer gives the same result on average
+		addon_data.player.main_swing_timer = addon_data.player.main_weapon_speed - 0.2
+		if addon_data.player.has_offhand then
+			addon_data.player.off_swing_timer = addon_data.player.off_weapon_speed - 0.2
+		end
     end
     addon_data.player.main_weapon_id = new_main_guid
     addon_data.player.off_weapon_id = new_off_guid
