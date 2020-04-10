@@ -668,6 +668,7 @@ local function OnAddonLoaded(self)
     addon_data.core.core_frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
     addon_data.core.core_frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
     addon_data.core.core_frame:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
+	addon_data.core.core_frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
     -- Load the settings for the core and all timers
     LoadAllSettings()
     InitializeAllVisuals()
@@ -706,6 +707,8 @@ local function CoreFrame_OnEvent(self, event, ...)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
 		addon_data.core.SpellHandler(args[1], args[3])
         addon_data.hunter.OnUnitSpellCastSucceeded(args[1], args[3])
+	elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+		ResetUnitSwingTimer(args[1])
     elseif event == "UNIT_SPELLCAST_DELAYED" then
         addon_data.hunter.OnUnitSpellCastDelayed(args[1], args[3])
     elseif event == "UNIT_SPELLCAST_FAILED" then
