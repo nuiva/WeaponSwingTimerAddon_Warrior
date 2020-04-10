@@ -659,7 +659,7 @@ local function OnAddonLoaded(self)
     addon_data.core.core_frame:RegisterEvent("PLAYER_REGEN_DISABLED")
     addon_data.core.core_frame:RegisterEvent("PLAYER_TARGET_CHANGED")
     addon_data.core.core_frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
-    addon_data.core.core_frame:RegisterEvent("UNIT_INVENTORY_CHANGED")
+    addon_data.core.core_frame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
     addon_data.core.core_frame:RegisterEvent("START_AUTOREPEAT_SPELL")
     addon_data.core.core_frame:RegisterEvent("STOP_AUTOREPEAT_SPELL")
     addon_data.core.core_frame:RegisterEvent("UNIT_SPELLCAST_START")
@@ -693,9 +693,8 @@ local function CoreFrame_OnEvent(self, event, ...)
         local combat_info = {CombatLogGetCurrentEventInfo()}
         addon_data.player.OnCombatLogUnfiltered(combat_info)
         addon_data.target.OnCombatLogUnfiltered(combat_info)
-    elseif event == "UNIT_INVENTORY_CHANGED" then
+    elseif event == "PLAYER_EQUIPMENT_CHANGED" then
         addon_data.player.OnInventoryChange()
-        addon_data.target.OnInventoryChange()
     elseif event == "START_AUTOREPEAT_SPELL" then
         addon_data.hunter.OnStartAutorepeatSpell()
     elseif event == "STOP_AUTOREPEAT_SPELL" then
