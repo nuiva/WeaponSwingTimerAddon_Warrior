@@ -623,24 +623,21 @@ addon_data.core.MissHandler = function(unit, miss_type, is_offhand)
 end
 
 addon_data.core.SpellHandler = function(unit, spell_id)
-    local _, player_class, _ = UnitClass('player')
-    for class, spell_table in pairs(swing_reset_spells) do
-        if player_class == class then
-            for spell_index, curr_spell_id in ipairs(spell_table) do
-                if spell_id == curr_spell_id then
-                    if unit == "player" then
-						addon_data.player.UpdateWeaponSpeed()
-                        addon_data.player.ResetMainSwingTimer()
-                    elseif unit == "target" then
-                        addon_data.target.ResetMainSwingTimer()
-                    else
-                        addon_data.utils.PrintMsg("Unexpected Unit Type in SpellHandler().")
-                    end
-                end
-                
-            end
-        end
-    end
+    local _, player_class, _ = UnitClass(unit)
+	local spell_table = swing_reset_spells[player_class]
+	if spell_table == nil then return end
+	for spell_index, curr_spell_id in ipairs(spell_table) do
+		if spell_id == curr_spell_id then
+			if unit == "player" then
+				addon_data.player.UpdateWeaponSpeed()
+				addon_data.player.ResetMainSwingTimer()
+			elseif unit == "target" then
+				addon_data.target.ResetMainSwingTimer()
+			else
+				addon_data.utils.PrintMsg("Unexpected Unit Type in SpellHandler().")
+			end
+		end
+	end
 end
 
 local function OnAddonLoaded(self)
@@ -696,7 +693,7 @@ local function CoreFrame_OnEvent(self, event, ...)
     elseif event == "UNIT_SPELLCAST_STOP" then
         addon_data.hunter.OnUnitSpellCastStop(args[1], args[3])
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-		addon_data.core.SpellHandler("player", args[3])
+		addon_data.core.SpellHandler(args[1], args[3])
         addon_data.hunter.OnUnitSpellCastSucceeded(args[1], args[3])
     elseif event == "UNIT_SPELLCAST_DELAYED" then
         addon_data.hunter.OnUnitSpellCastDelayed(args[1], args[3])
