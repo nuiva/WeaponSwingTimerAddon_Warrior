@@ -70,23 +70,36 @@ addon_data.player.RestoreDefaults = function()
     addon_data.player.UpdateConfigPanelValues()
 end
 
+-- UpdateAutoAttack
+--   Sets offhand swing to min 50% when autoattack is first enabled.
+do
+	local autoAttackEnabled = false
+	addon_data.player.UpdateAutoAttack = function()
+		local a = IsCurrentAction(1)
+		if a and not autoAttackEnabled then
+			addon_data.player.off_swing_timer = max(addon_data.player.off_swing_timer, .5 * addon_data.player.off_weapon_speed)
+		end
+		autoAttackEnabled = a
+	end
+end
+
 --[[============================================================================================]]--
 --[[====================================== LOGIC RELATED =======================================]]--
 --[[============================================================================================]]--
 -- EDITED: Full swing time is only updated on Flurry gain/lost events and swing combat events
 addon_data.player.UpdateWeaponSpeedUntilChanged = false
 addon_data.player.OnUpdate = function(elapsed)
-    if character_player_settings.enabled then
-		if addon_data.player.UpdateWeaponSpeedUntilChanged then
-			addon_data.player.UpdateWeaponSpeed()
-		end
-        -- Update the main hand swing timer
-        addon_data.player.UpdateMainSwingTimer(elapsed)
-        -- Update the off hand swing timer
-        addon_data.player.UpdateOffSwingTimer(elapsed)
-        -- Update the visuals
-        addon_data.player.UpdateVisualsOnUpdate()
-    end
+	if not character_player_settings.enabled then return end
+	if addon_data.player.UpdateWeaponSpeedUntilChanged then
+		addon_data.player.UpdateWeaponSpeed()
+	end
+	addon_data.player.UpdateAutoAttack()
+	-- Update the main hand swing timer
+	addon_data.player.UpdateMainSwingTimer(elapsed)
+	-- Update the off hand swing timer
+	addon_data.player.UpdateOffSwingTimer(elapsed)
+	-- Update the visuals
+	addon_data.player.UpdateVisualsOnUpdate()
 end
 
 addon_data.player.UpdateWeaponSpeed = function()
