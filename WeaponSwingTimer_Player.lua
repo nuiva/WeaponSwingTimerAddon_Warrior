@@ -99,7 +99,6 @@ addon_data.player.OnUpdate = function(elapsed)
 end
 
 addon_data.player.ResetWeaponSpeed = function(isOffhand) -- nil arg updates both
-	print("ResetWeaponSpeed", isOffhand, addon_data.player.has_offhand)
 	if isOffhand == nil then
 		addon_data.player.ResetMainWeaponSpeed()
 		addon_data.player.ResetOffWeaponSpeed()
