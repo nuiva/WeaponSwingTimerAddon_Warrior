@@ -137,7 +137,14 @@ addon_data.target.OnCombatLogUnfiltered = function(combat_info)
             end
         elseif (event == "SWING_MISSED") then
             local miss_type, is_offhand = select(12, unpack(combat_info))
-            addon_data.core.MissHandler("target", miss_type, is_offhand)
+			if dest_guid == UnitGUID("player") then
+				addon_data.core.MissHandler("target", miss_type, is_offhand)
+			end
+            if is_offhand then
+                addon_data.target.ResetOffSwingTimer()
+            else
+                addon_data.target.ResetMainSwingTimer()
+            end
         elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
             local _, _, _, _, _, _, spell_id = GetSpellInfo(spell_name)
             addon_data.core.SpellHandler("target", spell_id)

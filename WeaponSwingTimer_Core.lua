@@ -578,43 +578,18 @@ local function CoreFrame_OnUpdate(self, elapsed)
     addon_data.hunter.OnUpdate(elapsed)
 end
 
+-- Parry haste mechanics from magey's github wiki
 addon_data.core.MissHandler = function(unit, miss_type, is_offhand)
-    if miss_type == "PARRY" then
-        if unit == "player" then
-            min_swing_time = addon_data.target.main_weapon_speed * 0.2
-            if addon_data.target.main_swing_timer > min_swing_time then
-                addon_data.target.main_swing_timer = min_swing_time
-            end
-        elseif unit == "target" then
-            min_swing_time = addon_data.player.main_weapon_speed * 0.2
-            if addon_data.player.main_swing_timer > min_swing_time then
-                addon_data.player.main_swing_timer = min_swing_time
-            end
-            if not is_offhand then
-                addon_data.target.ResetMainSwingTimer()
-            else
-                addon_data.target.ResetOffSwingTimer()
-            end
-        else
-            addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler().")
-        end
-    else
-        if unit == "player" then
-            if not is_offhand then
-                addon_data.player.ResetMainSwingTimer()
-            else
-                addon_data.player.ResetOffSwingTimer()
-            end 
-        elseif unit == "target" then
-            if not is_offhand then
-                addon_data.target.ResetMainSwingTimer()
-            else
-                addon_data.target.ResetOffSwingTimer()
-            end 
-        else
-            addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler().")
-        end
-    end
+	if miss_type ~= "PARRY" then return end
+	if unit == "player" then
+		local c = max(0, min(0.4, addon_data.target.main_swing_timer / addon_data.target.main_weapon_speed - .2))
+		addon_data.target.main_swing_timer = addon_data.target.main_swing_timer - c * addon_data.target.main_weapon_speed
+	elseif unit == "target" then
+		local c = max(0, min(0.4, addon_data.player.main_swing_timer / addon_data.player.main_weapon_speed - .2))
+		addon_data.player.main_swing_timer = addon_data.player.main_swing_timer - c * addon_data.player.main_weapon_speed
+	else
+		addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler().")
+	end
 end
 
 local function ResetUnitSwingTimer(unit)

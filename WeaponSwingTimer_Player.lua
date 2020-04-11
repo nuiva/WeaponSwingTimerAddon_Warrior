@@ -167,7 +167,9 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
         elseif (event == "SWING_MISSED") then
 			addon_data.player.UpdateWeaponSpeed()
             local miss_type, is_offhand = select(12, unpack(combat_info))
-            addon_data.core.MissHandler("player", miss_type, is_offhand)
+			if dest_guid == UnitGUID("target") then
+				addon_data.core.MissHandler("player", miss_type, is_offhand)
+			end
 			addon_data.player.ResetWeaponSpeed(is_offhand)
             if is_offhand then
                 addon_data.player.ResetOffSwingTimer()
