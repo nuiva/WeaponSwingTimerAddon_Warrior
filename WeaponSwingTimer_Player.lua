@@ -156,20 +156,8 @@ end
 addon_data.player.OnCombatLogUnfiltered = function(combat_info)
     local _, event, _, source_guid, _, _, _, dest_guid, _, _, _, _, spell_name, _ = unpack(combat_info)
     if (source_guid == addon_data.player.guid) then
-        if (event == "SWING_DAMAGE") then
+        if (event == "SWING_DAMAGE") or event == "SWING_MISSED" then
             local _, _, _, _, _, _, _, _, _, is_offhand = select(12, unpack(combat_info))
-			addon_data.player.ResetWeaponSpeed(is_offhand)
-            if is_offhand then
-                addon_data.player.ResetOffSwingTimer()
-            else
-                addon_data.player.ResetMainSwingTimer()
-            end
-        elseif (event == "SWING_MISSED") then
-			addon_data.player.UpdateWeaponSpeed()
-            local miss_type, is_offhand = select(12, unpack(combat_info))
-			if dest_guid == UnitGUID("target") then
-				addon_data.core.MissHandler("player", miss_type, is_offhand)
-			end
 			addon_data.player.ResetWeaponSpeed(is_offhand)
             if is_offhand then
                 addon_data.player.ResetOffSwingTimer()
@@ -186,6 +174,19 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
 			end
         end
     end
+	if dest_guid == UnitGUID("player") then
+		local miss_type
+		local is_offhand = false
+		if event == "SWING_MISSED" then
+			miss_type = combat_info[12]
+			is_offhand = combat_info[13]
+		elseif event == "SPELL_MISSED" then
+			miss_type = combat_info[15]
+		else
+			return
+		end
+		addon_data.core.MissHandler("player", miss_type, is_offhand)
+	end
 end
 
 addon_data.player.ResetMainSwingTimer = function()

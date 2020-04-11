@@ -352,7 +352,7 @@ addon_data.hunter.OnUnitSpellCastSucceeded = function(unit, spell_id)
 			addon_data.hunter.ResetShotTimer()
 		end
 	end
-	if spell_id == 5384 then
+	if spell_id == 5384 then -- Feign Death
 			addon_data.hunter.UpdateWeaponSpeed()
 			addon_data.hunter.last_shot_time = GetTime()
 		addon_data.hunter.ResetShotTimer()

@@ -581,15 +581,12 @@ end
 -- Parry haste mechanics from magey's github wiki
 addon_data.core.MissHandler = function(unit, miss_type, is_offhand)
 	if miss_type ~= "PARRY" then return end
-	if unit == "player" then
-		local c = max(0, min(0.4, addon_data.target.main_swing_timer / addon_data.target.main_weapon_speed - .2))
-		addon_data.target.main_swing_timer = addon_data.target.main_swing_timer - c * addon_data.target.main_weapon_speed
-	elseif unit == "target" then
-		local c = max(0, min(0.4, addon_data.player.main_swing_timer / addon_data.player.main_weapon_speed - .2))
-		addon_data.player.main_swing_timer = addon_data.player.main_swing_timer - c * addon_data.player.main_weapon_speed
-	else
-		addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler().")
+	if unit ~= "player" and unit ~= "target" then
+		addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler(): " .. unit)
+		return
 	end
+	local c = max(0, min(0.4, addon_data[unit].main_swing_timer / addon_data[unit].main_weapon_speed - .2))
+	addon_data[unit].main_swing_timer = addon_data[unit].main_swing_timer - c * addon_data[unit].main_weapon_speed
 end
 
 local function ResetUnitSwingTimer(unit)
