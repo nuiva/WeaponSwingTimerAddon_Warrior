@@ -6,7 +6,30 @@ local slotLists = {}
 local bar = nil
 local tickMark = nil
 
-local function SetTick()
+local spellState = 1
+local spellIds = {}
+
+local function GetQueuedAction()
+	for i,v in pairs(spellIds) do
+		if IsCurrentSpell(i) then
+			return v
+		end
+	end
+	return 1
+end
+
+local function SetBarColor(queuedAction)
+	local s = character_player_settings
+	local barColors = {
+		[1] = {s.main_r, s.main_g, s.main_b},
+		[2] = {.5, .5, 0},
+		[3] = {0, .5, 0}
+	}
+	addon_data.player.frame.main_bar:SetVertexColor(unpack(barColors[queuedAction]))
+end
+
+local function OnUpdate()
+	-- Update tick
 	if not bar or not tickMark then return end
 	local latency_s = (select(4, GetNetStats()) or 0) / 1000
 	local barwidth_px = character_player_settings.width
@@ -24,43 +47,26 @@ local function SetTick()
 	end
 end
 
-local function GetActionbarState()
-	local spellidHS = select(7, GetSpellInfo("Heroic Strike"))
-	local spellidCleave = select(7, GetSpellInfo("Cleave"))
-	slotLists[1] = spellidHS and C_ActionBar.FindSpellActionButtons(spellidHS) or {}
-	slotLists[2] = spellidCleave and C_ActionBar.FindSpellActionButtons(spellidCleave) or {}
-end
-
-local function GetQueuedAction()
-	for _,v in pairs(slotLists[1]) do
-		if IsCurrentAction(v) then
-			return 2
-		end
+local function GetSpells()
+	local hsId = select(7, GetSpellInfo("Heroic Strike"))
+	local cleaveId = select(7, GetSpellInfo("Cleave"))
+	if hsId then
+		spellIds[hsId] = 2
 	end
-	for _,v in pairs(slotLists[2]) do
-		if IsCurrentAction(v) then
-			return 3
-		end
+	if cleaveId then
+		spellIds[cleaveId] = 3
 	end
-	return 1
-end
-
-local function SetBarColor(queuedAction)
-	local s = character_player_settings
-	local barColors = {
-		[1] = {s.main_r, s.main_g, s.main_b},
-		[2] = {.5, .5, 0},
-		[3] = {0, .5, 0}
-	}
-	addon_data.player.frame.main_bar:SetVertexColor(unpack(barColors[queuedAction]))
 end
 
 local function OnEvent(self,e)
-	if e == "ACTIONBAR_UPDATE_STATE" then
-		local queuedAction = GetQueuedAction()
-		SetBarColor(queuedAction)
+	if e == "CURRENT_SPELL_CAST_CHANGED" then
+		local state = GetQueuedAction()
+		if state ~= spellState then
+			SetBarColor(state)
+			spellState = state
+		end
 	else
-		GetActionbarState()
+		GetSpells()
 	end
 end
 
@@ -72,11 +78,12 @@ addon_data.warrior.InitializeVisuals = function()
 	tickMark:SetDrawLayer("ARTWORK", 1)
 end
 
-frame:RegisterEvent("ACTIONBAR_UPDATE_STATE")
+--[[frame:RegisterEvent("ACTIONBAR_UPDATE_STATE")
 frame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-frame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
---frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")]]
+frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("LEARNED_SPELL_IN_TAB")
+frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
 frame:SetScript("OnEvent", OnEvent)
-frame:SetScript("OnUpdate", SetTick)
+frame:SetScript("OnUpdate", OnUpdate)
 
-GetActionbarState()
