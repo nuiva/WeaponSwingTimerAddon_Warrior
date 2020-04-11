@@ -1,6 +1,6 @@
 local addon_name, addon_data = ...
 
-addon_data.target = {}
+addon_data.target = addon_data.unit:new("target")
 
 --[[============================================================================================]]--
 --[[===================================== SETTINGS RELATED =====================================]]--
@@ -265,7 +265,7 @@ addon_data.target.UpdateVisualsOnUpdate = function()
             frame.main_spark:Show()
         end
         -- Update the main bars text
-        frame.main_left_text:SetText("Main-Hand")
+        frame.main_left_text:SetText(tostring(addon_data.utils.SimpleRound(main_speed, 0.01)))
         frame.main_right_text:SetText(tostring(addon_data.utils.SimpleRound(main_timer, 0.1)))
         -- Update the off hand bar
         if addon_data.target.has_offhand and settings.show_offhand then

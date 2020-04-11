@@ -1,6 +1,6 @@
 local addon_name, addon_data = ...
 
-addon_data.player = {}
+addon_data.player = addon_data.unit:new("player")
 
 --[[============================================================================================]]--
 --[[===================================== SETTINGS RELATED =====================================]]--
@@ -88,7 +88,7 @@ end
 --[[============================================================================================]]--
 addon_data.player.OnUpdate = function(elapsed)
 	if not character_player_settings.enabled then return end
-	addon_data.player.UpdateWeaponSpeed()
+	addon_data.player:UpdateWeaponSpeed()
 	addon_data.player.UpdateAutoAttack()
 	-- Update the main hand swing timer
 	addon_data.player.UpdateMainSwingTimer(elapsed)
@@ -117,24 +117,6 @@ addon_data.player.ResetOffWeaponSpeed = function()
 	addon_data.player.has_offhand = addon_data.player.off_weapon_speed ~= nil
 	if not addon_data.player.has_offhand then return end
 	addon_data.player.off_weapon_speed_current = addon_data.player.off_weapon_speed
-end
-
-addon_data.player.UpdateWeaponSpeed = function()
-	local mainSpeed, offSpeed = UnitAttackSpeed("player")
-	if mainSpeed == addon_data.player.main_weapon_speed_current then return end
-	local haste = mainSpeed / (addon_data.player.main_weapon_speed_current or mainSpeed)
-	addon_data.player.main_weapon_speed_current = mainSpeed
-	addon_data.player.off_weapon_speed_current = offSpeed
-	if addon_data.player.ignoreNextHaste then
-		addon_data.player.ignoreNextHaste = false
-		return
-	end
-	addon_data.player.main_swing_timer = addon_data.player.main_swing_timer * haste
-	addon_data.player.main_weapon_speed = addon_data.player.main_weapon_speed * haste
-	if addon_data.player.has_offhand then
-		addon_data.player.off_swing_timer = addon_data.player.off_swing_timer * haste
-		addon_data.player.off_weapon_speed = addon_data.player.off_weapon_speed * haste
-	end
 end
 
 addon_data.player.OnInventoryChange = function()
