@@ -86,13 +86,9 @@ end
 --[[============================================================================================]]--
 --[[====================================== LOGIC RELATED =======================================]]--
 --[[============================================================================================]]--
--- EDITED: Full swing time is only updated on Flurry gain/lost events and swing combat events
-addon_data.player.UpdateWeaponSpeedUntilChanged = false
 addon_data.player.OnUpdate = function(elapsed)
 	if not character_player_settings.enabled then return end
-	if addon_data.player.UpdateWeaponSpeedUntilChanged then
-		addon_data.player.UpdateWeaponSpeed()
-	end
+	addon_data.player.UpdateWeaponSpeed()
 	addon_data.player.UpdateAutoAttack()
 	-- Update the main hand swing timer
 	addon_data.player.UpdateMainSwingTimer(elapsed)
@@ -102,35 +98,51 @@ addon_data.player.OnUpdate = function(elapsed)
 	addon_data.player.UpdateVisualsOnUpdate()
 end
 
+addon_data.player.ResetWeaponSpeed = function(isOffhand) -- nil arg updates both
+	print("ResetWeaponSpeed", isOffhand, addon_data.player.has_offhand)
+	if isOffhand == nil then
+		addon_data.player.ResetMainWeaponSpeed()
+		addon_data.player.ResetOffWeaponSpeed()
+	elseif isOffhand then
+		addon_data.player.ResetOffWeaponSpeed()
+	else
+		addon_data.player.ResetMainWeaponSpeed()
+	end
+end
+addon_data.player.ResetMainWeaponSpeed = function()
+	addon_data.player.main_weapon_speed, _ = UnitAttackSpeed("player")
+	addon_data.player.main_weapon_speed_current = addon_data.player.main_weapon_speed
+end
+addon_data.player.ResetOffWeaponSpeed = function()
+	_, addon_data.player.off_weapon_speed = UnitAttackSpeed("player")
+	addon_data.player.has_offhand = addon_data.player.off_weapon_speed ~= nil
+	if not addon_data.player.has_offhand then return end
+	addon_data.player.off_weapon_speed_current = addon_data.player.off_weapon_speed
+end
+
 addon_data.player.UpdateWeaponSpeed = function()
-    addon_data.player.UpdateMainWeaponSpeed()
-    addon_data.player.UpdateOffWeaponSpeed()
-	--[[ FIXME: Temp fix until I can nail down the divide by zero error
-	-- Editing author: Never seen this error.
-	if addon_data.player.main_weapon_speed == 0 then
-		addon_data.player.main_weapon_speed = 2
+	local mainSpeed, offSpeed = UnitAttackSpeed("player")
+	if mainSpeed == addon_data.player.main_weapon_speed_current then return end
+	local haste = mainSpeed / (addon_data.player.main_weapon_speed_current or mainSpeed)
+	addon_data.player.main_weapon_speed_current = mainSpeed
+	addon_data.player.off_weapon_speed_current = offSpeed
+	if addon_data.player.ignoreNextHaste then
+		addon_data.player.ignoreNextHaste = false
+		return
 	end
-	if addon_data.player.off_weapon_speed == 0 then
-		addon_data.player.off_weapon_speed = 2
-	end]]
-	if addon_data.player.main_speed_changed or addon_data.player.off_speed_changed then
-		addon_data.player.UpdateWeaponSpeedUntilChanged = false
-		local main_multiplier = addon_data.player.main_weapon_speed / addon_data.player.prev_main_weapon_speed
-		addon_data.player.main_swing_timer = addon_data.player.main_swing_timer * main_multiplier
-		if addon_data.player.has_offhand then
-			local off_multiplier = (addon_data.player.off_weapon_speed / addon_data.player.prev_off_weapon_speed)
-			addon_data.player.off_swing_timer = addon_data.player.off_swing_timer * off_multiplier
-		end
+	addon_data.player.main_swing_timer = addon_data.player.main_swing_timer * haste
+	addon_data.player.main_weapon_speed = addon_data.player.main_weapon_speed * haste
+	if addon_data.player.has_offhand then
+		addon_data.player.off_swing_timer = addon_data.player.off_swing_timer * haste
+		addon_data.player.off_weapon_speed = addon_data.player.off_weapon_speed * haste
 	end
-    --addon_data.player.UpdateVisualsOnUpdate()
 end
 
 addon_data.player.OnInventoryChange = function()
     local new_main_guid = GetInventoryItemID("player", 16)
     local new_off_guid = GetInventoryItemID("player", 17)
     if addon_data.player.main_weapon_id ~= new_main_guid or addon_data.player.off_weapon_id ~= new_off_guid then
-        addon_data.player.UpdateMainWeaponSpeed()
-        addon_data.player.UpdateOffWeaponSpeed()
+		addon_data.player.ResetWeaponSpeed()
 		-- It seems that swing timer is reset one spell batch (400ms) before the equipment changes
 		-- Adding 200ms to swing timer gives the same result on average
 		addon_data.player.main_swing_timer = addon_data.player.main_weapon_speed - 0.2
@@ -146,8 +158,8 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
     local _, event, _, source_guid, _, _, _, dest_guid, _, _, _, _, spell_name, _ = unpack(combat_info)
     if (source_guid == addon_data.player.guid) then
         if (event == "SWING_DAMAGE") then
-			addon_data.player.UpdateWeaponSpeed()
             local _, _, _, _, _, _, _, _, _, is_offhand = select(12, unpack(combat_info))
+			addon_data.player.ResetWeaponSpeed(is_offhand)
             if is_offhand then
                 addon_data.player.ResetOffSwingTimer()
             else
@@ -157,12 +169,19 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
 			addon_data.player.UpdateWeaponSpeed()
             local miss_type, is_offhand = select(12, unpack(combat_info))
             addon_data.core.MissHandler("player", miss_type, is_offhand)
+			addon_data.player.ResetWeaponSpeed(is_offhand)
+            if is_offhand then
+                addon_data.player.ResetOffSwingTimer()
+            else
+                addon_data.player.ResetMainSwingTimer()
+            end
         --[[elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
             local _, _, _, _, _, _, spell_id = GetSpellInfo(spell_name)
             addon_data.core.SpellHandler("player", spell_id)]]
 		elseif (event == "SPELL_AURA_APPLIED") or (event == "SPELL_AURA_REMOVED") then
-			if combat_info[13] == "Flurry" or combat_info[13] == "Chilled" then
-				addon_data.player.UpdateWeaponSpeedUntilChanged = true -- Weapon speed hasn't updated when CLEU fires
+			local s = combat_info[13] -- Spell name
+			if s == "Seal of the Crusader" then
+				addon_data.player.ignoreNextHaste = true
 			end
         end
     end
@@ -204,32 +223,6 @@ addon_data.player.UpdateOffSwingTimer = function(elapsed)
                 end
             end
         end
-    end
-end
-
-addon_data.player.UpdateMainWeaponSpeed = function()
-    addon_data.player.prev_main_weapon_speed = addon_data.player.main_weapon_speed
-    addon_data.player.main_weapon_speed, _ = UnitAttackSpeed("player")
-    if addon_data.player.main_weapon_speed ~= addon_data.player.prev_main_weapon_speed then
-        addon_data.player.main_speed_changed = true
-    else
-        addon_data.player.main_speed_changed = false
-    end
-end
-
-addon_data.player.UpdateOffWeaponSpeed = function()
-    addon_data.player.prev_off_weapon_speed = addon_data.player.off_weapon_speed
-    _, addon_data.player.off_weapon_speed = UnitAttackSpeed("player")
-    -- Check to see if we have an off-hand
-    if (not addon_data.player.off_weapon_speed) or (addon_data.player.off_weapon_speed == 0) then
-        addon_data.player.has_offhand = false
-    else
-        addon_data.player.has_offhand = true
-    end
-    if addon_data.player.off_weapon_speed ~= addon_data.player.prev_off_weapon_speed then
-        addon_data.player.off_speed_changed = true
-    else
-        addon_data.player.off_speed_changed = false
     end
 end
 
