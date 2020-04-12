@@ -592,7 +592,8 @@ end
 local function ResetUnitSwingTimer(unit)
 	local t = addon_data[unit]
 	if t == nil then
-		addon_data.utils.PrintMsg("ResetUnitSwingTimer: No data table for unit " .. unit)
+		--addon_data.utils.PrintMsg("ResetUnitSwingTimer: No data table for unit " .. unit)
+		return
 	end
 	t:UpdateWeaponSpeed()
 	t.ResetMainSwingTimer()

@@ -138,14 +138,10 @@ end
 addon_data.player.OnCombatLogUnfiltered = function(combat_info)
     local _, event, _, source_guid, _, _, _, dest_guid, _, _, _, _, spell_name, _ = unpack(combat_info)
     if (source_guid == addon_data.player.guid) then
-        if (event == "SWING_DAMAGE") or event == "SWING_MISSED" then
-            local _, _, _, _, _, _, _, _, _, is_offhand = select(12, unpack(combat_info))
-			addon_data.player.ResetWeaponSpeed(is_offhand)
-            if is_offhand then
-                addon_data.player.ResetOffSwingTimer()
-            else
-                addon_data.player.ResetMainSwingTimer()
-            end
+        if event == "SWING_DAMAGE" then
+			addon_data.player.ResetSwingTimer(combat_info[21])
+		elseif event == "SWING_MISSED" then
+			addon_data.player.ResetSwingTimer(combat_info[13])
         --[[elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
             local _, _, _, _, _, _, spell_id = GetSpellInfo(spell_name)
             addon_data.core.SpellHandler("player", spell_id)]]
@@ -171,14 +167,22 @@ addon_data.player.OnCombatLogUnfiltered = function(combat_info)
 	end
 end
 
+addon_data.player.ResetSwingTimer = function(isOffhand) -- nil arg updates both
+	if isOffhand == nil then
+		addon_data.player.ResetMainSwingTimer()
+		addon_data.player.ResetOffSwingTimer()
+	elseif isOffhand then
+		addon_data.player.ResetOffSwingTimer()
+	else
+		addon_data.player.ResetMainSwingTimer()
+	end
+end
 addon_data.player.ResetMainSwingTimer = function()
     addon_data.player.main_swing_timer = addon_data.player.main_weapon_speed
 end
-
 addon_data.player.ResetOffSwingTimer = function()
-    if addon_data.player.has_offhand then
-        addon_data.player.off_swing_timer = addon_data.player.off_weapon_speed
-    end
+	if not addon_data.player.has_offhand then return end
+    addon_data.player.off_swing_timer = addon_data.player.off_weapon_speed
 end
 
 addon_data.player.ZeroizeSwingTimers = function()
