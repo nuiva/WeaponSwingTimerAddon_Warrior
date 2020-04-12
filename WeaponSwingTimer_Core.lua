@@ -573,20 +573,9 @@ addon_data.core.RestoreDefaults = function()
 end
 
 local function CoreFrame_OnUpdate(self, elapsed)
-    addon_data.player.OnUpdate(elapsed)
-    addon_data.target.OnUpdate(elapsed)
+    addon_data.player:OnUpdate(elapsed)
+    addon_data.target:OnUpdate(elapsed)
     addon_data.hunter.OnUpdate(elapsed)
-end
-
--- Parry haste mechanics from magey's github wiki
-addon_data.core.MissHandler = function(unit, miss_type, is_offhand)
-	if miss_type ~= "PARRY" then return end
-	if unit ~= "player" and unit ~= "target" then
-		addon_data.utils.PrintMsg("Unexpected Unit Type in MissHandler(): " .. unit)
-		return
-	end
-	local c = max(0, min(0.4, addon_data[unit].main_swing_timer / addon_data[unit].main_weapon_speed - .2))
-	addon_data[unit].main_swing_timer = addon_data[unit].main_swing_timer - c * addon_data[unit].main_weapon_speed
 end
 
 local function ResetUnitSwingTimer(unit)
@@ -596,8 +585,7 @@ local function ResetUnitSwingTimer(unit)
 		return
 	end
 	t:UpdateWeaponSpeed()
-	t.ResetMainSwingTimer()
-	t.ResetOffSwingTimer()
+	t:ResetSwingTimer()
 end
 
 addon_data.core.SpellHandler = function(unit, spell_id)
@@ -641,8 +629,8 @@ local function OnAddonLoaded(self)
     LoadAllSettings()
     InitializeAllVisuals()
     -- Any other misc operations that happen at the start
-    addon_data.player.ZeroizeSwingTimers()
-    addon_data.target.ZeroizeSwingTimers()
+	addon_data.player:Initialize()
+	addon_data.target:Initialize()
     addon_data.utils.PrintMsg(load_message)
 end
 
@@ -660,8 +648,8 @@ local function CoreFrame_OnEvent(self, event, ...)
         addon_data.target.OnPlayerTargetChanged()
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         local combat_info = {CombatLogGetCurrentEventInfo()}
-        addon_data.player.OnCombatLogUnfiltered(combat_info)
-        addon_data.target.OnCombatLogUnfiltered(combat_info)
+        addon_data.player:OnCombatLogUnfiltered(combat_info)
+        addon_data.target:OnCombatLogUnfiltered(combat_info)
     elseif event == "PLAYER_EQUIPMENT_CHANGED" then
         addon_data.player.OnInventoryChange()
     elseif event == "START_AUTOREPEAT_SPELL" then

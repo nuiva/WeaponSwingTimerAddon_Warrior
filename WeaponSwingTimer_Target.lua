@@ -74,7 +74,7 @@ addon_data.target.OnPlayerTargetChanged = function()
     if UnitExists("target") then
         addon_data.target.class = UnitClass("target")[2]
         addon_data.target.guid = UnitGUID("target")
-        addon_data.target.ZeroizeSwingTimers()
+        addon_data.target:Initialize()
     end
 end
 
@@ -93,107 +93,6 @@ addon_data.target.OnInventoryChange = function()
         addon_data.target.ResetOffSwingTimer()
     end
     addon_data.target.off_weapon_id = new_off_guid
-end
-
-addon_data.target.OnUpdate = function(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
-        -- Update the weapon speed
-        addon_data.target.UpdateMainWeaponSpeed()
-        addon_data.target.UpdateOffWeaponSpeed()
-        -- FIXME: Temp fix until I can nail down the divide by zero error
-        if addon_data.target.main_weapon_speed == 0 then
-            addon_data.target.main_weapon_speed = 2
-        end
-        if addon_data.target.off_weapon_speed == 0 then
-            addon_data.target.off_weapon_speed = 2
-        end
-        -- If the weapon speed changed for either hand then a buff occured and we need to modify the timers
-        if addon_data.target.main_speed_changed or addon_data.target.off_speed_changed then
-            local main_multiplier = addon_data.target.main_weapon_speed / addon_data.target.prev_main_weapon_speed
-            addon_data.target.main_swing_timer = addon_data.target.main_swing_timer * main_multiplier
-            if addon_data.target.has_offhand then
-                local off_multiplier = (addon_data.target.off_weapon_speed / addon_data.target.prev_off_weapon_speed)
-                addon_data.target.off_swing_timer = addon_data.target.off_swing_timer * off_multiplier
-            end
-        end
-        -- Update the main hand swing timer
-        addon_data.target.UpdateMainSwingTimer(elapsed)
-        -- Update the off hand swing timer
-        addon_data.target.UpdateOffSwingTimer(elapsed)
-    end
-    -- Update the visuals
-        addon_data.target.UpdateVisualsOnUpdate()
-end
-
-addon_data.target.OnCombatLogUnfiltered = function(combat_info)
-    local _, event, _, source_guid, _, _, _, dest_guid, _, _, _, _, spell_name, _ = unpack(combat_info)
-    if (source_guid == addon_data.target.guid) then
-        if (event == "SWING_DAMAGE") or event == "SWING_MISSED" then
-            local _, _, _, _, _, _, _, _, _, is_offhand = select(12, unpack(combat_info))
-            if is_offhand then
-                addon_data.target.ResetOffSwingTimer()
-            else
-                addon_data.target.ResetMainSwingTimer()
-            end
-        elseif (event == "SPELL_DAMAGE") or (event == "SPELL_MISSED") then
-            local _, _, _, _, _, _, spell_id = GetSpellInfo(spell_name)
-            addon_data.core.SpellHandler("target", spell_id)
-        end
-    end
-    if dest_guid == UnitGUID("target") then
-		local miss_type
-		local is_offhand = false
-		if event == "SWING_MISSED" then
-			miss_type = combat_info[12]
-			is_offhand = combat_info[13]
-		elseif event == "SPELL_MISSED" then
-			miss_type = combat_info[15]
-		else
-			return
-		end
-		addon_data.core.MissHandler("target", miss_type, is_offhand)
-	end
-end
-
-addon_data.target.ResetMainSwingTimer = function()
-    if UnitExists("target") then
-        addon_data.target.main_swing_timer = addon_data.target.main_weapon_speed
-    end
-end
-
-addon_data.target.ResetOffSwingTimer = function()
-    if addon_data.target.has_offhand and UnitExists("target") then
-        addon_data.target.off_swing_timer = addon_data.target.off_weapon_speed
-    end
-end
-
-addon_data.target.ZeroizeSwingTimers = function()
-    addon_data.target.main_swing_timer = 0.0001
-    addon_data.target.off_swing_timer = 0.0001
-end
-
-addon_data.target.UpdateMainSwingTimer = function(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
-        if addon_data.target.main_swing_timer > 0 then
-            addon_data.target.main_swing_timer = addon_data.target.main_swing_timer - elapsed
-            if addon_data.target.main_swing_timer < 0 then
-                addon_data.target.main_swing_timer = 0
-            end
-        end
-    end
-end
-
-addon_data.target.UpdateOffSwingTimer = function(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
-        if addon_data.target.has_offhand then
-            if addon_data.target.off_swing_timer > 0 then
-                addon_data.target.off_swing_timer = addon_data.target.off_swing_timer - elapsed
-                if addon_data.target.off_swing_timer < 0 then
-                    addon_data.target.off_swing_timer = 0
-                end
-            end
-        end
-    end
 end
 
 addon_data.target.UpdateMainWeaponSpeed = function()
