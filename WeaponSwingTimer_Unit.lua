@@ -76,10 +76,7 @@ end
 
 addon_data.unit.Initialize = function(self)
 	local settingString = "character_" .. self.unitId .. "_settings"
-	self.settings = _G[settingString]
-	if self.settings == nil then
-		self.settings = {enabled = false}
-	end
+	self.settings = _G[settingString] or {enabled = false}
 	self:ResetWeaponSpeed()
 	self:ZeroizeSwingTimers()
 end
@@ -108,7 +105,7 @@ addon_data.unit.OnCombatLogUnfiltered = function(self, combat_info)
 		elseif (event == "SPELL_AURA_APPLIED") or (event == "SPELL_AURA_REMOVED") then
 			local s = combat_info[13] -- Spell name
 			if s == "Seal of the Crusader" then
-				addon_data.player.ignoreNextHaste = true
+				self.ignoreNextHaste = true
 			end
         end
     end
