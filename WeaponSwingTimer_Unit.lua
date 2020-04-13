@@ -10,16 +10,19 @@ addon_data.unit.new = function(self, unitId)
 	return a
 end
 
+addon_data.unit.nextHasteMultiplier = 1
+local hasteMultipliers = {
+	["Seal of the Crusader"] = 1.4,
+}
+
 addon_data.unit.UpdateWeaponSpeed = function(self)
 	local mainSpeed, offSpeed = UnitAttackSpeed(self.unitId)
 	if mainSpeed == self.main_weapon_speed_current then return end
 	local haste = mainSpeed / (self.main_weapon_speed_current or mainSpeed)
 	self.main_weapon_speed_current = mainSpeed
 	self.off_weapon_speed_current = offSpeed
-	if self.ignoreNextHaste then
-		self.ignoreNextHaste = false
-		return
-	end
+	haste = haste * self.nextHasteMultiplier
+	self.nextHasteMultiplier = 1
 	self.main_swing_timer = self.main_swing_timer * haste
 	self.main_weapon_speed = self.main_weapon_speed * haste
 	if self.has_offhand then
@@ -99,14 +102,19 @@ addon_data.unit.OnCombatLogUnfiltered = function(self, combat_info)
     local _, event, _, source_guid, _, _, _, dest_guid, _, _, _, _, spell_name, _ = unpack(combat_info)
     if source_guid == UnitGUID(self.unitId) then
         if event == "SWING_DAMAGE" then
+			self:ResetWeaponSpeed(combat_info[21])
 			self:ResetSwingTimer(combat_info[21])
 		elseif event == "SWING_MISSED" then
+			self:ResetWeaponSpeed(combat_info[13])
 			self:ResetSwingTimer(combat_info[13])
-		elseif (event == "SPELL_AURA_APPLIED") or (event == "SPELL_AURA_REMOVED") then
-			local s = combat_info[13] -- Spell name
-			if s == "Seal of the Crusader" then
-				self.ignoreNextHaste = true
-			end
+		elseif event == "SPELL_AURA_APPLIED" then
+			local c = hasteMultipliers[combat_info[13]]
+			if c == nil then return end
+			self.nextHasteMultiplier = self.nextHasteMultiplier * c
+		elseif event == "SPELL_AURA_REMOVED" then
+			local c = hasteMultipliers[combat_info[13]]
+			if c == nil then return end
+			self.nextHasteMultiplier = self.nextHasteMultiplier / c
         end
     end
 	if dest_guid == UnitGUID(self.unitId) then
