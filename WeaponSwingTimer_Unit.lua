@@ -31,12 +31,12 @@ addon_data.unit.UpdateWeaponSpeed = function(self)
 	end
 end
 
--- Reads swing speed again for mainhand (false), offhand (true) or both (nil)
+-- Reads swing speed again for mainhand (false,0), offhand (true,1) or both (nil,-1)
 addon_data.unit.ResetWeaponSpeed = function(self, isOffhand)
-	if isOffhand == nil then
+	if isOffhand == nil or isOffhand == -1 then
 		self:ResetMainWeaponSpeed()
 		self:ResetOffWeaponSpeed()
-	elseif isOffhand then
+	elseif isOffhand == true or isOffhand == -1 then
 		self:ResetOffWeaponSpeed()
 	else
 		self:ResetMainWeaponSpeed()
@@ -53,12 +53,12 @@ addon_data.unit.ResetOffWeaponSpeed = function(self)
 	self.off_weapon_speed_current = self.off_weapon_speed
 end
 
--- Starts a new swing for mainhand (false), offhand (true) or both (nil)
+-- Starts a new swing for mainhand (false,0), offhand (true,1) or both (nil,-1)
 addon_data.unit.ResetSwingTimer = function(self, isOffhand)
-	if isOffhand == nil then
+	if isOffhand == nil or isOffhand == -1 then
 		self:ResetMainSwingTimer()
 		self:ResetOffSwingTimer()
-	elseif isOffhand then
+	elseif isOffhand == true or isOffhand == 1 then
 		self:ResetOffSwingTimer()
 	else
 		self:ResetMainSwingTimer()
