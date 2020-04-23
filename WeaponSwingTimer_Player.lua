@@ -72,15 +72,13 @@ end
 
 -- UpdateAutoAttack
 --   Sets offhand swing to min 50% when autoattack is first enabled.
-do
-	local autoAttackEnabled = false
-	addon_data.player.UpdateAutoAttack = function()
-		local a = IsCurrentSpell(6603)
-		if addon_data.player.has_offhand and a and not autoAttackEnabled then
-			addon_data.player.off_swing_timer = max(addon_data.player.off_swing_timer, .5 * addon_data.player.off_weapon_speed)
-		end
-		autoAttackEnabled = a
+addon_data.player.autoAttackEnabled = false
+addon_data.player.UpdateAutoAttack = function()
+	local a = IsCurrentSpell(6603)
+	if addon_data.player.has_offhand and a and not addon_data.player.autoAttackEnabled then
+		addon_data.player.off_swing_timer = max(addon_data.player.off_swing_timer, .5 * addon_data.player.off_weapon_speed)
 	end
+	addon_data.player.autoAttackEnabled = a
 end
 
 --[[============================================================================================]]--
@@ -184,7 +182,7 @@ addon_data.player.UpdateVisualsOnUpdate = function()
             frame:SetHeight(settings.height)
         end
         -- Update the alpha
-        if addon_data.core.in_combat then
+        if addon_data.player.autoAttackEnabled then
             frame:SetAlpha(settings.in_combat_alpha)
         else
             frame:SetAlpha(settings.ooc_alpha)
